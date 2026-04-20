@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
-from groq import Groq
 from bson import ObjectId
 from dotenv import load_dotenv
 import os
@@ -8,10 +7,10 @@ import os
 from database import messages_collection, chats_collection
 from models import ChatMessage, NewChat
 from auth import get_current_user
+from api_gateway.gateway import call
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 router = APIRouter()
 
 
@@ -136,15 +135,27 @@ async def send_message(
         "content": data.prompt
     })
 
-    # Call Groq
-    response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
-        messages=messages,
-        temperature=0.7,
-        max_tokens=1024
-    )
-
-    reply = response.choices[0].message.content
+    # Call AI through gateway with fallback
+    try:
+        result = await call(
+            messages=messages,
+            task="general",
+            max_tokens=1024,
+            temperature=0.7
+        )
+        reply = result.reply
+    except Exception as e:
+        # Fallback to direct Groq call if gateway fails
+        print(f"Gateway failed: {e}, falling back to direct Groq")
+        from groq import Groq
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1024
+        )
+        reply = response.choices[0].message.content
 
     # Save user message — now includes chat_id
     await messages_collection.insert_one({

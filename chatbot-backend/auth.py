@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+import hashlib
+import secrets
 
 from database import users_collection
 from models import UserSignup, UserLogin
@@ -13,10 +14,6 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM")
-
-# Tool for hashing passwords
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # Tool for reading Bearer token from headers
 security = HTTPBearer()
 
@@ -27,10 +24,31 @@ router = APIRouter()
 # ── Password helpers ──────────────────────────────────────
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    # Use PBKDF2 with SHA256 and a random salt
+    salt = secrets.token_hex(16)
+    hashed = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt.encode('utf-8'), 100000)
+    return f"{salt}:{hashed.hex()}"
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    # Handle both old bcrypt hashes and new PBKDF2 hashes
+    if hashed.startswith('$2b$') or hashed.startswith('$2a$'):
+        # Old bcrypt hash - try to verify with passlib if available
+        try:
+            from passlib.context import CryptContext
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            return pwd_context.verify(plain, hashed)
+        except:
+            return False
+    elif ':' in hashed:
+        # New PBKDF2 hash
+        try:
+            salt, hash_value = hashed.split(':')
+            computed_hash = hashlib.pbkdf2_hmac('sha256', plain.encode('utf-8'), salt.encode('utf-8'), 100000)
+            return secrets.compare_digest(computed_hash.hex(), hash_value)
+        except:
+            return False
+    else:
+        return False
 
 
 # ── JWT helpers ───────────────────────────────────────────
@@ -73,7 +91,7 @@ async def signup(data: UserSignup):
     if existing:
         raise HTTPException(status_code=400, detail="Username already taken")
 
-    # Never save plain password
+    # Hash the password
     hashed = hash_password(data.password)
 
     await users_collection.insert_one({
