@@ -1,6 +1,6 @@
 # gateway.py
 #
-# THIS IS THE ONLY FILE YOUR CHATBOT NEEDS TO IMPORT.
+# THIS IS THE ONLY FILE CHATBOT NEEDS TO IMPORT.
 #
 # Full flow on every call:
 #
