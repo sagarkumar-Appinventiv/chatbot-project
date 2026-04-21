@@ -80,9 +80,9 @@ MODELS = {
 # Put fastest and cheapest first.
 
 FALLBACK_CHAIN = [
-    "groq/llama-3.1-8b-instant",
+    "groq/llama3-8b-8192",
     "groq/llama3-70b-8192",
-    "gemini/gemini-2.5-flash-lite",
+    "gemini/gemini-1.5-flash",
 ]
 
 

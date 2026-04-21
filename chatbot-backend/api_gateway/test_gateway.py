@@ -2,8 +2,10 @@
 # Run this to verify everything works before connecting to chatbot
 
 import asyncio
-from gateway import call
-from key_manager import warmup
+import sys
+sys.path.insert(0, '/home/appinventiv/ChatBot_practice/chatbot-backend')
+
+from api_gateway import call, warmup
 
 
 async def main():
