@@ -7,10 +7,14 @@
 
 from .groq_provider import GroqProvider
 from .gemini_provider import GeminiProvider
+from .mistral_provider import MistralProvider
+from .openrouter_provider import OpenRouterProvider
 
 _REGISTRY = {
-    "groq":   GroqProvider(),
-    "gemini": GeminiProvider(),
+    "groq":       GroqProvider(),
+    "gemini":     GeminiProvider(),
+    "mistral":    MistralProvider(),
+    "openrouter": OpenRouterProvider(),
 }
 
 
