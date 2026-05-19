@@ -299,14 +299,6 @@ Redis-based key health monitoring
 
 ---
 
-## Future Enhancements
-
-- [ ] Add OpenAI and Anthropic, mistral, and other providers
-- [ ] Admin dashboard to view key health and logs // in progress
-- [ ] Rate limiting per user 
-
----
-
 ## Key learnings
 
 - FastAPI async patterns
@@ -321,5 +313,4 @@ Redis-based key health monitoring
 
 ---
 
-## Project is still in progress ...... 
 
